@@ -42,9 +42,8 @@ public class AzterketaDBKud {
         return emaitza;
     }
 
-    public String md5Lortu(String url) {
-        //url * "/README" pasatu eta md5 itzultzen du
-        String hash = "";
+    public String md5Lortu(String url) throws NoSuchAlgorithmException {
+        String hash = MessageDigest.getInstance("MD5").digest().toString();
         return hash;
     }
 }
