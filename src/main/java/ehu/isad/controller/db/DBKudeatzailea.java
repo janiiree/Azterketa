@@ -1,51 +1,77 @@
 package ehu.isad.controller.db;
 
-import ehu.isad.utils.Utils;
-
-import java.lang.reflect.InvocationTargetException;
-import java.sql.*;
+import java.io.InputStream;
+import java.io.IOException;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.Properties;
 
 public class DBKudeatzailea {
-    
+
     Connection conn = null;
-    
+
     private static final DBKudeatzailea instance = new DBKudeatzailea();
-    
+
     public static DBKudeatzailea getInstance() {
         return instance;
     }
-    
+
     private DBKudeatzailea() {
-        connOpen();
+        Properties properties = null;
+        InputStream in = null;
+
+        try {
+            in = this.getClass().getResourceAsStream("/setup.properties");
+            properties = new Properties();
+            properties.load(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        this.conOpen(properties.getProperty("dbpath"));
     }
 
-    private void connOpen() {
-        Properties properties = Utils.lortuEzarpenak();
+    private void conOpen(String dbpath) {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver").getConstructor().newInstance();
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/", properties);
-            conn.setCatalog(properties.getProperty("dbname"));
-        } catch (SQLException e) {
-            //handle any errors
-            System.out.println("SQLException: " + e.getMessage());
-            System.out.println("SQLState: " + e.getSQLState());
-            System.out.println("VendorError: " + e.getErrorCode());
-        } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException | InstantiationException | NoSuchMethodException e) {
-            e.printStackTrace();
+            String url = "jdbc:sqlite:" + dbpath;
+            conn = DriverManager.getConnection(url);
+            System.out.println("Database connection established");
+        } catch (Exception e) {
+            System.err.println("Cannot connect to the database server " + e);
         }
     }
 
+    private void conClose() {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("Database connection terminated");
+    }
+
     public ResultSet execSQL(String query) {
-        int count = 0;
+        int count;
         Statement s;
         ResultSet rs = null;
+
         try {
-            s = (Statement) conn.createStatement();
-            if (query.toLowerCase().indexOf("select") == 0) {
-                rs = query(s, query);
-            } else {
+            s = conn.createStatement();
+            if (query.toLowerCase().indexOf("select") == 0) {   //select aginduak
+                rs = this.query(s, query);
+            } else {    //update, delete, create aginduak
                 count = s.executeUpdate(query);
+                System.out.println(count + " rows affected");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -56,8 +82,7 @@ public class DBKudeatzailea {
     private ResultSet query(Statement s, String query) {
         ResultSet rs = null;
         try {
-            s.executeQuery(query);
-            rs = s.getResultSet();
+            rs = s.executeQuery(query);
         } catch (SQLException e) {
             e.printStackTrace();
         }

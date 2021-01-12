@@ -26,7 +26,7 @@ public class Main extends Application {
     }
 
     private void pantailaKargatu() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/Txanponak.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/Azterketa.fxml"));
         Parent UI = loader.load();
         scene = new Scene(UI);
         txanponKud = loader.getController();
